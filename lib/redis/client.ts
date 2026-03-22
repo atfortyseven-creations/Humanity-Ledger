@@ -133,7 +133,9 @@ try {
         redisClient = createMockRedis('EdgeRuntime');
     } else if (REDIS_URL || IS_BUILDING) {
         if (process.env.NODE_ENV === 'production' && !IS_BUILDING) {
-            redisClient = createRedisClient({ name: 'Production' });
+            // [TEMPORARY-FIX] Force mock mode if infrastructure is flaky
+            console.warn('[Redis:Main] ⚠️ Forcing DEGRADED MODE (Mock) for production stability.');
+            redisClient = createMockRedis('ProductionMock');
         } else if (IS_BUILDING) {
             // Build Phase: provide a safe dummy to satisfy static analysis
             redisClient = {
