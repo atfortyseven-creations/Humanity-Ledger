@@ -109,13 +109,13 @@ export function createRedisClient(config: { name?: string; isSubscriber?: boolea
     return new Redis(REDIS_URL, {
         family: 0, // [DNS-FIX] Dual-stack resolution
         keepAlive: 10000, // [STABILITY] Keep-Alive to prevent proxy timeout
-        maxRetriesPerRequest: 1, // FAST FAIL: Don't queue requests if Redis is down
+        maxRetriesPerRequest: 3, // Relaxed proxy failover queue
         enableReadyCheck: false,
-        connectTimeout: 2000, // AGGRESSIVE: 2s or fail
+        connectTimeout: 10000, // 10s for Railway external proxy cold starts
         retryStrategy(times: number) {
-            // [LEGENDARY-RESILIENCE] Skip retries if infrastructure is failing
-            if (times > 3) return null; // STOP retrying after 3 attempts
-            return Math.min(times * 100, 1000);
+            // [LEGENDARY-RESILIENCE] 
+            if (times > 6) return null; // STOP retrying after 6 attempts
+            return Math.min(times * 200, 2000);
         },
         reconnectOnError(err: any) {
             const targetErrors = ['READONLY', 'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN'];
