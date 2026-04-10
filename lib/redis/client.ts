@@ -43,19 +43,11 @@ function getSanitizedRedisUrl(): string {
         return rawUrl;
     }
 
-    // [FIX] If it looks like a host:port or just a host (contains a dot), prepend redis://
-    if (rawUrl && !rawUrl.includes('://') && rawUrl.includes('.')) {
-        return `redis://${rawUrl}`;
-    }
-
-    // Attempt reconstruction from individual variables
+    // Attempt reconstruction from individual variables (Railway and generic)
     const host = process.env.REDISHOST || process.env.REDIS_HOST || process.env.RAILWAY_REDIS_HOST;
     const port = process.env.REDISPORT || process.env.REDIS_PORT || '6379';
     const user = process.env.REDISUSER || process.env.REDIS_USER || 'default';
-    
-    // If rawUrl is likely a password (long, no dots, no protocol)
-    const isLikelyPassword = rawUrl && !rawUrl.includes('://') && !rawUrl.includes('.') && rawUrl.length > 20;
-    const pass = process.env.REDISPASSWORD || process.env.REDIS_PASSWORD || (isLikelyPassword ? rawUrl : '');
+    const pass = process.env.REDISPASSWORD || process.env.REDIS_PASSWORD || rawUrl;
     
     if (host) {
         const protocol = (process.env.REDIS_TLS === 'true' || port === '6380' || rawUrl.includes('rediss')) ? 'rediss' : 'redis';
@@ -63,15 +55,8 @@ function getSanitizedRedisUrl(): string {
         return `${protocol}://${auth}${host}:${port}`;
     }
 
-    // Attempt Railway Proxy if we ONLY have a password
-    if (isLikelyPassword && !host) {
-        const fallBackHost = 'roundhouse.proxy.rlwy.net'; 
-        return `redis://default:${rawUrl}@${fallBackHost}:${port}`;
-    }
-
-    // [CRITICAL FIX] If it's not a valid URL by this point, DO NOT return just a random string
-    // as ioredis will interpret it as a domain name and cause endless ENOTFOUND loops!
-    return '';
+    // Do not guess proxy URL port to prevent silent ETIMEDOUT when port differs. Let the client fail fast.
+    return rawUrl.includes('://') ? rawUrl : '';
 }
 
 const REDIS_URL = getSanitizedRedisUrl();
@@ -107,7 +92,7 @@ export function createRedisClient(config: { name?: string; isSubscriber?: boolea
 
     const Redis = require('ioredis');
     const client = new Redis(REDIS_URL, {
-        family: 0, // [DNS-FIX] Dual-stack resolution
+        family: 4, // [IPv4-FIX] Ensure Railway proxy connectivity avoids IPv6 blackholes
         keepAlive: 10000, // [STABILITY] Keep-Alive to prevent proxy timeout
         maxRetriesPerRequest: 3, // Relaxed proxy failover queue
         enableReadyCheck: false,
