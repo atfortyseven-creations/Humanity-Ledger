@@ -6,6 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    command: ["npx", "next", "start", "-p", "3000", "-H", "0.0.0.0"]
     ports:
       - "3000:3000"
     environment:
@@ -58,17 +59,33 @@ services:
     networks:
       - sovereign-net
 
-  # Syndicate Daemon Worker
-  worker:
+  # Sovereign Mesh Core (ZKP, AVS)
+  worker-mesh:
     build:
       context: .
-      dockerfile: Dockerfile.worker
+      dockerfile: Dockerfile
+    command: ["npx", "tsx", "scripts/sovereign-mesh.ts"]
     environment:
-      - NEO4J_URI=bolt://neo4j:7687
+      - DATABASE_URL=postgresql://sovereign:whale@postgres:5432/ominverse?schema=public
       - REDIS_URL=redis://redis:6379
     depends_on:
+      - postgres
       - redis
-      - neo4j
+    networks:
+      - sovereign-net
+
+  # Solana Block Scanner Worker
+  worker-solana:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["npx", "tsx", "scripts/solana-worker.ts"]
+    environment:
+      - DATABASE_URL=postgresql://sovereign:whale@postgres:5432/ominverse?schema=public
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
     networks:
       - sovereign-net
 
