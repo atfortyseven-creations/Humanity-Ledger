@@ -29,6 +29,11 @@ function createMockRedis(name?: string) {
             memoryStore.delete(k); 
             return r; 
         },
+        psubscribe: async () => {}, // [STUB] Crash-proof fallback
+        punsubscribe: async () => {},
+        subscribe: async () => {},
+        unsubscribe: async () => {},
+        publish: async () => 0,
         status: 'mock',
         __isMock: true
     };
@@ -140,6 +145,11 @@ try {
                 set: async () => 'OK',
                 setex: async () => 'OK',
                 del: async () => 0,
+                psubscribe: async () => {},
+                punsubscribe: async () => {},
+                subscribe: async () => {},
+                unsubscribe: async () => {},
+                publish: async () => 0,
                 status: 'build-mock',
                 __isBuildMock: true,
             };
