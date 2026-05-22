@@ -1,7 +1,7 @@
 const {ethers} = require('ethers');
 
 const wallets = [
-  { name: 'Sovereign (PRIVATE_KEY)',      key: '0xfb91876509651f58e461dbfc37c3bee8f23b9bc6c5ebb71cc477576cee50d28a' },
+  { name: 'System (PRIVATE_KEY)',      key: '0xfb91876509651f58e461dbfc37c3bee8f23b9bc6c5ebb71cc477576cee50d28a' },
   { name: 'Relayer (RELAYER_PRIVATE_KEY)',  key: '0xa7d12865a5642356108554be5d89a1650c7408cbd4781272972631b09316da8a' },
 ];
 

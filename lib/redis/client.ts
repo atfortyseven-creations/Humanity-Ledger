@@ -29,7 +29,7 @@ function createMockRedis(name?: string) {
             memoryStore.delete(k);
             return r;
         },
-        // ── Set operations (used by feature-flag index) ──────────────────────
+        //  Set operations (used by feature-flag index) 
         sadd: async (k: string, ...members: string[]) => {
             const set: Set<string> = memoryStore.get(k) || new Set();
             let added = 0;
@@ -48,7 +48,7 @@ function createMockRedis(name?: string) {
             const set: Set<string> = memoryStore.get(k) || new Set();
             return Array.from(set);
         },
-        // ────────────────────────────────────────────────────────────────────
+        // 
         psubscribe: async () => {},
         punsubscribe: async () => {},
         subscribe: async () => {},
@@ -93,12 +93,12 @@ const IS_BUILDING = process.env.NEXT_PHASE === 'phase-production-build' || proce
  */
 export function createRedisClient(config: { name?: string; isSubscriber?: boolean } = {}) {
     if (IS_EDGE) {
-        console.warn(`[Redis:${config.name || 'Factory'}] ⚠️ Edge Runtime detected. Skipping ioredis initialization.`);
+        console.warn(`[Redis:${config.name || 'Factory'}] ️ Edge Runtime detected. Skipping ioredis initialization.`);
         return createMockRedis(config.name);
     }
 
     if (IS_BUILDING) {
-        console.warn(`[Redis:${config.name || 'Factory'}] ⚠️ Build Phase detected. Skipping real Redis connection.`);
+        console.warn(`[Redis:${config.name || 'Factory'}] ️ Build Phase detected. Skipping real Redis connection.`);
         return createMockRedis(config.name);
     }
 
@@ -110,11 +110,11 @@ export function createRedisClient(config: { name?: string; isSubscriber?: boolea
     // Robust validation
     const hasProtocol = REDIS_URL.startsWith('redis://') || REDIS_URL.startsWith('rediss://');
     if (!hasProtocol) {
-        console.error(`[Redis:${config.name || 'Factory'}] 💀 Invalid REDIS_URL format. Using Mock-Mode for stability.`);
+        console.error(`[Redis:${config.name || 'Factory'}]  Invalid REDIS_URL format. Using Mock-Mode for stability.`);
         return createMockRedis(config.name);
     }
 
-    console.log(`[Redis:${config.name || 'Factory'}] 🚀 Initializing legendary connection...`);
+    console.log(`[Redis:${config.name || 'Factory'}]  Initializing legendary connection...`);
 
     const ioredisPkg = 'ioredis';
     const Redis = eval('require')(ioredisPkg);
@@ -133,7 +133,7 @@ export function createRedisClient(config: { name?: string; isSubscriber?: boolea
             const targetErrors = ['READONLY', 'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN'];
             const shouldReconnect = targetErrors.some(e => err.message.includes(e));
             if (shouldReconnect) {
-                console.warn(`[Redis:${config.name || 'Client'}] 🔄 Reconnecting on critical error: ${err.message}`);
+                console.warn(`[Redis:${config.name || 'Client'}]  Reconnecting on critical error: ${err.message}`);
             }
             return shouldReconnect;
         }
@@ -191,9 +191,9 @@ try {
                 if (!redisClient.__errorLogged) {
                     const urlToMask = REDIS_URL || 'UNDEFINED_URL';
                     const maskedUrl = urlToMask.replace(/:[^@]*@/, ':***@');
-                    console.error(`[Redis:Main] 🔴 Critical Connection Failure for ${maskedUrl}:`, err.message);
+                    console.error(`[Redis:Main]  Critical Connection Failure for ${maskedUrl}:`, err.message);
                     if (err.message.includes('ENOTFOUND')) {
-                        console.error(`[Redis:Main] 💀 DNS RESOLUTION FAILED. Check if host has invalid characters (e.g. underscores).`);
+                        console.error(`[Redis:Main]  DNS RESOLUTION FAILED. Check if host has invalid characters (e.g. underscores).`);
                     }
                     redisClient.__errorLogged = true;
                 }
@@ -202,25 +202,25 @@ try {
             redisClient.on('connect', () => {
                 redisClient.__errorLogged = false;
                 const masked = (REDIS_URL || '').replace(/:\/\/[^@]*@/, '://***@');
-                console.log(`[Redis:Main] ✅ Status: LEGENDARY — Connected to cluster: ${masked}`);
+                console.log(`[Redis:Main]  Status: LEGENDARY  Connected to cluster: ${masked}`);
             });
         }
     } else {
-        // [RESILIENCE] Never throw — a missing REDIS_URL must not kill the server process.
+        // [RESILIENCE] Never throw  a missing REDIS_URL must not kill the server process.
         // Features requiring Redis (rate-limiting, caching) will degrade gracefully.
         if (process.env.NODE_ENV === 'production') {
-            console.info('[Redis:Initialization] Sovereign In-Memory Mock Mode Activated. Operating safely without Redis.');
+            console.info('[Redis:Initialization] System In-Memory Mock Mode Activated. Operating safely without Redis.');
         }
         redisClient = createMockRedis('FinalFallback');
     }
 } catch (err: any) {
-    console.error('⚠️ [Redis:Initialization] Zero-Crash Safeguard Triggered.');
-    console.error(`💀 Error: ${err.message}`);
+    console.error('️ [Redis:Initialization] Zero-Crash Safeguard Triggered.');
+    console.error(` Error: ${err.message}`);
     
     // Diagnostic Helper: Log the shape of the URL without revealing it
     if (REDIS_URL) {
         const maskedPreview = `${REDIS_URL.substring(0, 4)}...${REDIS_URL.substring(REDIS_URL.length - 4)}`;
-        console.error(`🔧 Diagnostic: REDIS_URL length: ${REDIS_URL.length}, Start/End: ${maskedPreview}`);
+        console.error(` Diagnostic: REDIS_URL length: ${REDIS_URL.length}, Start/End: ${maskedPreview}`);
     }
     
     // Fallback to "Degraded Mode" mock instead of crashing the process
@@ -231,7 +231,7 @@ try {
 if (!redisClient && !IS_BUILDING) {
     redisClient = createMockRedis('AbsoluteFallback');
     if (process.env.NODE_ENV === 'production') {
-        console.info('📡 [Redis:Production] Sovereign Local Cache operational.');
+        console.info(' [Redis:Production] System Local Cache operational.');
     }
 }
 
@@ -240,7 +240,7 @@ export { redisClient };
 export const createSubClient = (name: string) => createRedisClient({ name, isSubscriber: true });
 
 /**
- * ⚡ SAFE REDIS — wraps any redis call in a timeout.
+ *  SAFE REDIS  wraps any redis call in a timeout.
  * Returns 'TIMEOUT' if it takes longer than 1500ms, allowing the caller 
  * to distinguish between a missing key and a network failure.
  */
@@ -277,7 +277,7 @@ export async function safeRedisSet(key: string, value: string, ...args: any[]): 
             new Promise<void>((resolve) => setTimeout(resolve, 2500))
         ]);
     } catch {
-        // Silently ignore — cache is an optimization, not a requirement
+        // Silently ignore  cache is an optimization, not a requirement
     }
 }
 
@@ -310,7 +310,7 @@ export async function safeRedisSMembers(key: string): Promise<string[]> {
 }
 
 /**
- * Health check — use in /api/health-check to verify Redis connectivity
+ * Health check  use in /api/health-check to verify Redis connectivity
  */
 export async function checkRedisHealth(): Promise<{ ok: boolean; latencyMs?: number; mode: 'real' | 'mock' }> {
     if ((redisClient as any).__isMock) {

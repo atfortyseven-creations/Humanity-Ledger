@@ -10,23 +10,23 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://sovereign:whale@postgres:5432/ominverse?schema=public
+      - DATABASE_URL=postgresql://system:whale@postgres:5432/ominverse?schema=public
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=SovereignLevel9
+      - NEO4J_PASSWORD=SystemLevel9
       - REDIS_URL=redis://redis:6379
     depends_on:
       - postgres
       - neo4j
       - redis
     networks:
-      - sovereign-net
+      - system-net
 
   # PostgreSQL + pgvector
   postgres:
     image: ankane/pgvector:latest
     environment:
-      POSTGRES_USER: sovereign
+      POSTGRES_USER: system
       POSTGRES_PASSWORD: whale
       POSTGRES_DB: ominverse
     ports:
@@ -34,20 +34,20 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - sovereign-net
+      - system-net
 
   # Neo4j Graph Database
   neo4j:
     image: neo4j:5.11
     environment:
-      NEO4J_AUTH: neo4j/SovereignLevel9
+      NEO4J_AUTH: neo4j/SystemLevel9
     ports:
       - "7474:7474"
       - "7687:7687"
     volumes:
       - neo4j_data:/data
     networks:
-      - sovereign-net
+      - system-net
 
   # Redis for BullMQ & WebSockets
   redis:
@@ -57,22 +57,22 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - sovereign-net
+      - system-net
 
-  # Sovereign Mesh Core (ZKP, AVS)
+  # System Mesh Core (ZKP, AVS)
   worker-mesh:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["npx", "tsx", "scripts/sovereign-mesh.ts"]
+    command: ["npx", "tsx", "scripts/system-mesh.ts"]
     environment:
-      - DATABASE_URL=postgresql://sovereign:whale@postgres:5432/ominverse?schema=public
+      - DATABASE_URL=postgresql://system:whale@postgres:5432/ominverse?schema=public
       - REDIS_URL=redis://redis:6379
     depends_on:
       - postgres
       - redis
     networks:
-      - sovereign-net
+      - system-net
 
   # Solana Block Scanner Worker
   worker-solana:
@@ -81,16 +81,16 @@ services:
       dockerfile: Dockerfile
     command: ["npx", "tsx", "scripts/solana-worker.ts"]
     environment:
-      - DATABASE_URL=postgresql://sovereign:whale@postgres:5432/ominverse?schema=public
+      - DATABASE_URL=postgresql://system:whale@postgres:5432/ominverse?schema=public
       - REDIS_URL=redis://redis:6379
     depends_on:
       - postgres
       - redis
     networks:
-      - sovereign-net
+      - system-net
 
 networks:
-  sovereign-net:
+  system-net:
 
 volumes:
   postgres_data:
